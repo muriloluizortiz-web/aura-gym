@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 // ═══════════════════════════════════════════════════════════
 const FIREBASE_CONFIG = {
@@ -94,13 +94,13 @@ async function apiPost(body) {
 }
 
 const C = {
-  bg:"#0b0b12", card:"#13131e", border:"#1c1c2e",
-  accent:"#c8ff00", accentDim:"#c8ff0018", accentMid:"#c8ff0055",
-  text:"#e4e4ef", dim:"#555570",
-  danger:"#ff4466", dangerDim:"#ff446620",
-  success:"#00d68f", successDim:"#00d68f18",
-  warning:"#ffaa00", warningDim:"#ffaa0020",
-  rowOdd:"#0f0f18", rowEven:"#13131e", headerBg:"#0e0e17",
+  bg:"#F2F0EF", card:"#FFFFFF", border:"#E0D5C7",
+  accent:"#6A2135", accentDim:"#6A213512", accentMid:"#6A213544",
+  text:"#2A1A1F", dim:"#8C7B84",
+  danger:"#C0392B", dangerDim:"#C0392B15",
+  success:"#6A2135", successDim:"#6A213512",
+  warning:"#D4A017", warningDim:"#D4A01715",
+  rowOdd:"#F2F0EF", rowEven:"#FFFFFF", headerBg:"#E0D5C7",
 };
 
 const TABS = { REGISTRO:0, RESUMO:1, AOVIVO:2, PAINEL:3, CONFIG:4 };
@@ -142,14 +142,14 @@ function LoginScreen({ onLogin }) {
     setLoading(false);
   };
 
-  const inp = { background:"#1a1a28", border:`1px solid ${C.border}`, borderRadius:10, padding:"14px 16px", color:C.text, fontSize:15, outline:"none", width:"100%", boxSizing:"border-box", fontFamily:"inherit" };
+  const inp = { background:"#F2F0EF", border:`1px solid ${C.border}`, borderRadius:10, padding:"14px 16px", color:C.text, fontSize:15, outline:"none", width:"100%", boxSizing:"border-box", fontFamily:"inherit" };
 
   return (
     <div style={{ minHeight:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Sans','Segoe UI',sans-serif", padding:20 }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
       <div style={{ width:"100%", maxWidth:380 }}>
         <div style={{ textAlign:"center", marginBottom:36 }}>
-          <div style={{ width:56, height:56, borderRadius:14, background:`linear-gradient(135deg,${C.accent},#a0cc00)`, display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:28, fontWeight:700, color:C.bg, marginBottom:12 }}>A</div>
+          <div style={{ width:56, height:56, borderRadius:14, background:`linear-gradient(135deg,${C.accent},#8B2D47)`, display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:28, fontWeight:700, color:"#fff", marginBottom:12 }}>A</div>
           <div style={{ fontFamily:"'Space Mono',monospace", fontWeight:700, fontSize:22, color:C.accent, letterSpacing:3 }}>AURA GYM</div>
           <div style={{ fontSize:12, color:C.dim, marginTop:4, letterSpacing:1 }}>TORRE DE CONTROLE</div>
         </div>
@@ -165,7 +165,7 @@ function LoginScreen({ onLogin }) {
             <label style={{ fontSize:11, color:C.dim, textTransform:"uppercase", letterSpacing:1, marginBottom:4, display:"block" }}>Senha</label>
             <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••" style={inp} onKeyDown={e=>e.key==="Enter"&&handleSubmit()} />
           </div>
-          <button onClick={handleSubmit} disabled={loading} style={{ width:"100%", padding:14, border:"none", borderRadius:10, cursor:loading?"wait":"pointer", background: loading ? C.dim : `linear-gradient(135deg,${C.accent},#a0cc00)`, color:C.bg, fontWeight:700, fontSize:15, fontFamily:"inherit", marginBottom:16, opacity: loading ? .6 : 1 }}>
+          <button onClick={handleSubmit} disabled={loading} style={{ width:"100%", padding:14, border:"none", borderRadius:10, cursor:loading?"wait":"pointer", background: loading ? C.dim : `linear-gradient(135deg,${C.accent},#8B2D47)`, color:C.bg, fontWeight:700, fontSize:15, fontFamily:"inherit", marginBottom:16, opacity: loading ? .6 : 1 }}>
             {loading ? "Aguarde..." : mode==="login" ? "Entrar" : "Criar conta"}
           </button>
           <div style={{ textAlign:"center" }}>
@@ -261,7 +261,7 @@ export default function AuraGym() {
   const mediaDuracao = duracoes.length ? Math.round(duracoes.reduce((a,b)=>a+b,0)/duracoes.length) : 0;
   const taxaOcupacao = capacidade>0 ? Math.round((emTreino.length/capacidade)*100) : 0;
 
-  const personalStats = useMemo(() => {
+  const personalStats = (() => {
     const m = {};
     personals.forEach(p => { m[p]={total:0,emTreino:0,duracoes:[]}; });
     records.forEach(r => {
@@ -272,7 +272,7 @@ export default function AuraGym() {
       }
     });
     return m;
-  },[records, personals]);
+  })();
 
   const registrarEntrada = async () => {
     if(!form.nome.trim()) return;
@@ -331,7 +331,7 @@ export default function AuraGym() {
     try { window.localStorage?.setItem?.("aura_areas", JSON.stringify(updated)); } catch(e) {}
   };
 
-  const inputStyle = { background:"#1a1a28",border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit" };
+  const inputStyle = { background:"#F2F0EF",border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit" };
 
   const tabItems = [
     { key:TABS.REGISTRO, label:"📋 Registro" },
@@ -362,7 +362,7 @@ export default function AuraGym() {
         <div style={{ maxWidth:1080,margin:"0 auto" }}>
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8 }}>
             <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-              <div style={{ width:32,height:32,borderRadius:7,background:`linear-gradient(135deg,${C.accent},#a0cc00)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:C.bg }}>A</div>
+              <div style={{ width:32,height:32,borderRadius:7,background:`linear-gradient(135deg,${C.accent},#8B2D47)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#fff" }}>A</div>
               <span style={{ fontFamily:"'Space Mono',monospace",fontWeight:700,fontSize:14,color:C.accent,letterSpacing:2 }}>AURA GYM</span>
             </div>
             <div style={{ display:"flex",alignItems:"center",gap:8 }}>
@@ -379,15 +379,15 @@ export default function AuraGym() {
               <span style={{ fontFamily:"'Space Mono',monospace",fontSize:16,fontWeight:700 }}><LiveClock /></span>
               {user && (
                 <div style={{ display:"flex",alignItems:"center",gap:5,marginLeft:2 }}>
-                  <div style={{ width:24,height:24,borderRadius:"50%",background:C.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:C.bg }}>{(user.displayName||"U")[0].toUpperCase()}</div>
+                  <div style={{ width:24,height:24,borderRadius:"50%",background:C.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff" }}>{(user.displayName||"U")[0].toUpperCase()}</div>
                   <span style={{ fontSize:10,color:C.text,fontWeight:500 }}>{user.displayName||fromFakeEmail(user.email)}</span>
                   <button onClick={handleLogout} style={{ background:"none",border:`1px solid ${C.border}`,borderRadius:5,padding:"3px 8px",color:C.dim,fontSize:9,cursor:"pointer",fontFamily:"inherit" }}>Sair</button>
                 </div>
               )}
             </div>
           </div>
-          <div style={{ display:"flex",gap:2,marginTop:10,background:"#090912",borderRadius:7,padding:2 }}>
-            {tabItems.map(t2=>(<button key={t2.key} onClick={()=>setTab(t2.key)} style={{ flex:1,padding:"7px 4px",border:"none",borderRadius:5,cursor:"pointer",background:tab===t2.key?C.accent:"transparent",color:tab===t2.key?C.bg:C.dim,fontWeight:tab===t2.key?700:500,fontSize:10,fontFamily:"inherit" }}>{t2.label}</button>))}
+          <div style={{ display:"flex",gap:2,marginTop:10,background:"#E8E2DC",borderRadius:7,padding:2 }}>
+            {tabItems.map(t2=>(<button key={t2.key} onClick={()=>setTab(t2.key)} style={{ flex:1,padding:"7px 4px",border:"none",borderRadius:5,cursor:"pointer",background:tab===t2.key?C.accent:"transparent",color:tab===t2.key?"#fff":C.dim,fontWeight:tab===t2.key?700:500,fontSize:10,fontFamily:"inherit" }}>{t2.label}</button>))}
           </div>
         </div>
       </div>
@@ -412,18 +412,18 @@ export default function AuraGym() {
             <div style={{ background:C.card,border:`1px solid ${C.accent}33`,borderRadius:12,padding:18,marginBottom:18,boxShadow:`0 0 30px ${C.accent}11`,animation:"slideIn .2s ease" }}>
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
                 <div style={{ gridColumn:"1/-1" }}><label style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>Nome do Aluno *</label><input value={form.nome} onChange={e=>setForm({...form,nome:e.target.value})} placeholder="Nome..." style={{...inputStyle,marginTop:3,borderColor:C.accent+"44"}} onKeyDown={e=>e.key==="Enter"&&registrarEntrada()} autoFocus /></div>
-                <div><label style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>Personal</label><select value={form.personal} onChange={e=>setForm({...form,personal:e.target.value})} style={{...inputStyle,marginTop:3,cursor:"pointer",appearance:"auto"}}><option value="">Selecione...</option>{personals.map(p=><option key={p} value={p}>{p}</option>)}</select></div>
+                <div><label style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>Personal</label><select value={form.personal} onChange={e=>setForm({...form,personal:e.target.value})} style={{...inputStyle,marginTop:3,cursor:"pointer",appearance:"auto"}}><option value="">Selecione...</option>{personals.filter(p => !personalStats[p] || personalStats[p].emTreino < 2).map(p=>{const busy = personalStats[p]?.emTreino === 1; return <option key={p} value={p}>{p}{busy ? " ●" : ""}</option>;})}</select></div>
                 <div><label style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>Área</label><select value={form.area} onChange={e=>setForm({...form,area:e.target.value})} style={{...inputStyle,marginTop:3,cursor:"pointer",appearance:"auto"}}><option value="">Selecione...</option>{areas.map(a=><option key={a} value={a}>{a}</option>)}</select></div>
                 <div><label style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>Horário de entrada <span style={{color:C.dim,fontSize:9}}>(vazio = agora)</span></label><input type="time" value={form.horaEntrada} onChange={e=>setForm({...form,horaEntrada:e.target.value})} style={{...inputStyle,marginTop:3}} /></div>
                 <div><label style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>Observação</label><input value={form.obs} onChange={e=>setForm({...form,obs:e.target.value})} placeholder="Opcional..." style={{...inputStyle,marginTop:3}} /></div>
               </div>
-              <button onClick={registrarEntrada} style={{ marginTop:14,width:"100%",padding:12,border:"none",borderRadius:8,background:`linear-gradient(135deg,${C.accent},#a0cc00)`,color:C.bg,fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit" }}>⏱ Registrar Entrada{form.horaEntrada ? ` às ${form.horaEntrada}` : ` — ${nowTime()}`}</button>
+              <button onClick={registrarEntrada} style={{ marginTop:14,width:"100%",padding:12,border:"none",borderRadius:8,background:`linear-gradient(135deg,${C.accent},#8B2D47)`,color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit" }}>⏱ Registrar Entrada{form.horaEntrada ? ` às ${form.horaEntrada}` : ` — ${nowTime()}`}</button>
             </div>
           )}
 
           {emTreino.length>0 && (<div style={{ marginBottom:20 }}>
             <div style={{ fontSize:11,color:C.success,textTransform:"uppercase",letterSpacing:2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:6 }}><span style={{ width:7,height:7,borderRadius:"50%",background:C.success,animation:"pulse 2s infinite" }}/>Em Treino ({emTreino.length})</div>
-            {emTreino.map(r=>(<div key={r.id} style={{ background:C.successDim,border:`1px solid ${C.success}33`,borderRadius:10,padding:"10px 14px",marginBottom:6,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8 }}><div><div style={{ fontWeight:600,fontSize:14 }}>{r.nome}</div><div style={{ fontSize:11,color:C.dim,marginTop:2 }}>Entrada {r.entrada} · {r.personal||"Sem personal"} · {r.area||"—"}</div></div><button onClick={()=>markSaida(r.id)} style={{ padding:"7px 16px",border:"none",borderRadius:6,background:C.danger,color:"#fff",fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>Saída ⏱</button></div>))}
+            {emTreino.map(r=>{const pBusy = personalStats[r.personal]?.emTreino || 0; return(<div key={r.id} style={{ background:C.successDim,border:`1px solid ${C.success}33`,borderRadius:10,padding:"10px 14px",marginBottom:6,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8 }}><div><div style={{ fontWeight:600,fontSize:14 }}>{r.nome}</div><div style={{ fontSize:11,color:C.dim,marginTop:2 }}>Entrada {r.entrada} · {r.personal ? <span>{r.personal}{pBusy>=2 ? <span style={{color:C.danger,marginLeft:4,fontSize:9}} title="Lotado (2/2)">🔴</span> : pBusy===1 ? <span style={{color:C.warning,marginLeft:4,fontSize:9}} title="Atendendo 1">🟡</span> : null}</span> : "Sem personal"} · {r.area||"—"}</div></div><button onClick={()=>markSaida(r.id)} style={{ padding:"7px 16px",border:"none",borderRadius:6,background:C.danger,color:"#fff",fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>Saída ⏱</button></div>);})}
           </div>)}
 
           {finalizados.length>0 && (<div>
@@ -472,9 +472,9 @@ export default function AuraGym() {
                 return(<div key={r.id} style={{ background:C.card,border:`1px solid ${isL?C.danger+"55":isW?C.warning+"44":C.success+"33"}`,borderRadius:12,padding:"14px 16px",animation:"breathe 3s infinite" }}>
                   <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8 }}>
                     <div style={{ flex:1,minWidth:180 }}><div style={{ fontWeight:700,fontSize:16 }}>{r.nome}</div><div style={{ fontSize:12,color:C.dim,marginTop:4,display:"flex",flexWrap:"wrap",gap:8 }}><span>⏱ {r.entrada}</span>{r.personal&&<span>👤 {r.personal}</span>}{r.area&&<span>📍 {r.area}</span>}</div></div>
-                    <div style={{ textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8 }}><div style={{ fontFamily:"'Space Mono',monospace",fontSize:32,fontWeight:700,color:bc,lineHeight:1 }}>{pad(el.min)}:{pad(el.sec)}</div><button onClick={()=>markSaida(r.id)} style={{ padding:"8px 20px",border:"none",borderRadius:6,background:C.danger,color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>Registrar Saída</button></div>
+                    <div style={{ textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8 }}><div style={{ fontFamily:"'Space Mono',monospace",fontSize:32,fontWeight:700,color:bc,lineHeight:1 }}>{el.min}<span style={{fontSize:14,color:C.dim,fontWeight:400}}> min</span></div><button onClick={()=>markSaida(r.id)} style={{ padding:"8px 20px",border:"none",borderRadius:6,background:C.danger,color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit" }}>Registrar Saída</button></div>
                   </div>
-                  <div style={{ marginTop:10,background:"#1a1a28",borderRadius:4,height:6,overflow:"hidden" }}><div style={{ height:"100%",borderRadius:4,width:`${pct}%`,background:`linear-gradient(90deg,${C.success},${isW?C.warning:C.success},${isL?C.danger:isW?C.warning:C.success})`,transition:"width 1s linear" }}/></div>
+                  <div style={{ marginTop:10,background:"#E0D5C7",borderRadius:4,height:6,overflow:"hidden" }}><div style={{ height:"100%",borderRadius:4,width:`${pct}%`,background:`linear-gradient(90deg,${C.success},${isW?C.warning:C.success},${isL?C.danger:isW?C.warning:C.success})`,transition:"width 1s linear" }}/></div>
                   <div style={{ display:"flex",justifyContent:"space-between",marginTop:3,fontSize:9,color:C.dim }}><span>0</span><span style={{color:isW?C.warning:C.dim}}>45m</span><span style={{color:isL?C.danger:C.dim}}>60m</span><span>90m</span></div>
                 </div>);
               })}
@@ -488,7 +488,7 @@ export default function AuraGym() {
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18 }}>
             {[{l:"Total",v:allNamed.length,i:"👥",c:C.accent},{l:"Em Treino",v:emTreino.length,i:"🏃",c:C.success},{l:"Média",v:mediaDuracao?`${mediaDuracao}m`:"—",i:"⏱",c:C.text},{l:"Ocupação",v:`${taxaOcupacao}%`,i:"📈",c:taxaOcupacao>80?C.danger:C.accent}].map((k,i)=>(<div key={i} style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:16,textAlign:"center" }}><div style={{ fontSize:22,marginBottom:2 }}>{k.i}</div><div style={{ fontFamily:"'Space Mono',monospace",fontSize:26,fontWeight:700,color:k.c }}>{k.v}</div><div style={{ fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginTop:3 }}>{k.l}</div></div>))}
           </div>
-          <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:14,marginBottom:18 }}><div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginBottom:6 }}>Ocupação</div><div style={{ background:"#1a1a28",borderRadius:5,height:22,overflow:"hidden",position:"relative" }}><div style={{ height:"100%",borderRadius:5,transition:"width .5s",width:`${Math.min(taxaOcupacao,100)}%`,background:taxaOcupacao>80?`linear-gradient(90deg,${C.warning},${C.danger})`:`linear-gradient(90deg,${C.accent},#a0cc00)` }}/><div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:600,fontSize:11,color:"#fff",mixBlendMode:"difference" }}>{emTreino.length}/{capacidade}</div></div></div>
+          <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:14,marginBottom:18 }}><div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginBottom:6 }}>Ocupação</div><div style={{ background:"#E0D5C7",borderRadius:5,height:22,overflow:"hidden",position:"relative" }}><div style={{ height:"100%",borderRadius:5,transition:"width .5s",width:`${Math.min(taxaOcupacao,100)}%`,background:taxaOcupacao>80?`linear-gradient(90deg,${C.warning},${C.danger})`:`linear-gradient(90deg,${C.accent},#8B2D47)` }}/><div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:600,fontSize:11,color:"#fff",color:"#fff" }}>{emTreino.length}/{capacidade}</div></div></div>
           <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden" }}>
             <div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,padding:"10px 12px 0" }}>Ranking por Personal</div>
             <table style={{ width:"100%",borderCollapse:"collapse",marginTop:6 }}><thead><tr style={{ borderBottom:`1px solid ${C.border}` }}>{["Personal","Atend.","Média","Treino"].map((h,i)=>(<th key={i} style={{ padding:"7px 10px",fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,fontWeight:600,textAlign:i===0?"left":"center" }}>{h}</th>))}</tr></thead><tbody>
@@ -507,7 +507,7 @@ export default function AuraGym() {
             <div style={{ fontSize:12,color:C.dim,textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:12 }}>Personal Trainers ({personals.length})</div>
             <div style={{ display:"flex",flexWrap:"wrap",gap:6,marginBottom:12 }}>
               {personals.map(p=>(
-                <div key={p} style={{ background:"#1a1a28",border:`1px solid ${C.border}`,borderRadius:6,padding:"6px 10px",fontSize:13,display:"flex",alignItems:"center",gap:6 }}>
+                <div key={p} style={{ background:"#E0D5C7",border:`1px solid ${C.border}`,borderRadius:6,padding:"6px 10px",fontSize:13,display:"flex",alignItems:"center",gap:6 }}>
                   <span>{p}</span>
                   <button onClick={()=>removePersonal(p)} style={{ background:"none",border:"none",color:C.danger,cursor:"pointer",fontSize:14,padding:0,lineHeight:1,opacity:.6 }}>✕</button>
                 </div>
@@ -515,7 +515,7 @@ export default function AuraGym() {
             </div>
             <div style={{ display:"flex",gap:8 }}>
               <input value={newPersonal} onChange={e=>setNewPersonal(e.target.value)} placeholder="Nome do novo personal..." style={{...inputStyle,flex:1}} onKeyDown={e=>e.key==="Enter"&&addPersonal()} />
-              <button onClick={addPersonal} style={{ padding:"10px 18px",border:"none",borderRadius:8,background:C.accent,color:C.bg,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap" }}>+ Adicionar</button>
+              <button onClick={addPersonal} style={{ padding:"10px 18px",border:"none",borderRadius:8,background:C.accent,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap" }}>+ Adicionar</button>
             </div>
           </div>
 
@@ -524,7 +524,7 @@ export default function AuraGym() {
             <div style={{ fontSize:12,color:C.dim,textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:12 }}>Áreas ({areas.length})</div>
             <div style={{ display:"flex",flexWrap:"wrap",gap:6,marginBottom:12 }}>
               {areas.map(a=>(
-                <div key={a} style={{ background:"#1a1a28",border:`1px solid ${C.border}`,borderRadius:6,padding:"6px 10px",fontSize:13,display:"flex",alignItems:"center",gap:6 }}>
+                <div key={a} style={{ background:"#E0D5C7",border:`1px solid ${C.border}`,borderRadius:6,padding:"6px 10px",fontSize:13,display:"flex",alignItems:"center",gap:6 }}>
                   <span>{a}</span>
                   <button onClick={()=>removeArea(a)} style={{ background:"none",border:"none",color:C.danger,cursor:"pointer",fontSize:14,padding:0,lineHeight:1,opacity:.6 }}>✕</button>
                 </div>
@@ -532,7 +532,7 @@ export default function AuraGym() {
             </div>
             <div style={{ display:"flex",gap:8 }}>
               <input value={newArea} onChange={e=>setNewArea(e.target.value)} placeholder="Nome da nova área..." style={{...inputStyle,flex:1}} onKeyDown={e=>e.key==="Enter"&&addArea()} />
-              <button onClick={addArea} style={{ padding:"10px 18px",border:"none",borderRadius:8,background:C.accent,color:C.bg,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap" }}>+ Adicionar</button>
+              <button onClick={addArea} style={{ padding:"10px 18px",border:"none",borderRadius:8,background:C.accent,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap" }}>+ Adicionar</button>
             </div>
           </div>
 
