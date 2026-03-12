@@ -195,7 +195,7 @@ export default function AuraGym() {
   const [areas, setAreas] = useState(DEFAULT_AREAS);
   const [newPersonal, setNewPersonal] = useState("");
   const [newArea, setNewArea] = useState("");
-  const [areaPrincipal, setAreaPrincipal] = useState("Máquinas");
+  const [areaPrincipal, setAreaPrincipal] = useState("Musculação");
   const syncTimeout = useRef(null);
   const tick = useTick(1000);
 
@@ -264,12 +264,15 @@ export default function AuraGym() {
 
   const personalStats = (() => {
     const m = {};
-    personals.forEach(p => { m[p]={total:0,emTreino:0,duracoes:[]}; });
+    personals.forEach(p => { m[p]={total:0,emTreino:0,duracoes:[],duracoesArea:[]}; });
     records.forEach(r => {
       if(r.personal && m[r.personal]) {
         m[r.personal].total++;
         if(!r.saida) m[r.personal].emTreino++;
-        if(r.saida){const d=timeDiffMin(r.entrada,r.saida);if(d>0)m[r.personal].duracoes.push(d);}
+        if(r.saida){const d=timeDiffMin(r.entrada,r.saida);if(d>0){
+          m[r.personal].duracoes.push(d);
+          if(r.area === areaPrincipal) m[r.personal].duracoesArea.push(d);
+        }}
       }
     });
     return m;
@@ -299,7 +302,8 @@ export default function AuraGym() {
   const registrarEntrada = async () => {
     if(!form.nome.trim()) return;
     const hora = form.horaEntrada || nowTime();
-    const record = { id:Date.now(), data:todayKey(), nome:form.nome.trim(), entrada:hora, saida:null, personal:form.personal, area:form.area, obs:form.obs, avaliacao:null, lider:liderSala };
+    const ocupacaoAtual = emTreino.length + 1; // +1 porque este aluno está entrando
+    const record = { id:Date.now(), data:todayKey(), nome:form.nome.trim(), entrada:hora, saida:null, personal:form.personal, area:form.area, obs:form.obs, avaliacao:null, lider:liderSala, ocupacao_entrada:ocupacaoAtual, capacidade_entrada:capacidade };
     setRecords(prev=>[...prev, record]);
     setForm({ nome:"",personal:"",area:"",obs:"",horaEntrada:"" }); setShowForm(false);
     setSyncing(true); await apiPost({ action:"save", record }); setSyncing(false);
@@ -307,8 +311,9 @@ export default function AuraGym() {
 
   const markSaida = async (id) => {
     const saida=nowTime();
+    const ocupacaoAtual = emTreino.length - 1; // -1 porque este aluno está saindo
     setRecords(prev=>prev.map(r=>r.id===id?{...r,saida}:r));
-    setSyncing(true); await apiPost({ action:"update", record:{id,saida} }); setSyncing(false);
+    setSyncing(true); await apiPost({ action:"update", record:{id, saida, ocupacao_saida:Math.max(0,ocupacaoAtual), capacidade_saida:capacidade} }); setSyncing(false);
   };
 
   const setAvaliacao = async (id, val) => {
@@ -514,8 +519,8 @@ export default function AuraGym() {
           <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:14,marginBottom:18 }}><div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginBottom:6 }}>Ocupação</div><div style={{ background:"#E0D5C7",borderRadius:5,height:22,overflow:"hidden",position:"relative" }}><div style={{ height:"100%",borderRadius:5,transition:"width .5s",width:`${Math.min(taxaOcupacao,100)}%`,background:taxaOcupacao>80?`linear-gradient(90deg,${C.warning},${C.danger})`:`linear-gradient(90deg,#6A2135,#8B2D47)` }}/><div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:600,fontSize:11,color:"#fff",color:"#fff" }}>{emTreino.length}/{capacidade}</div></div></div>
           <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden" }}>
             <div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,padding:"10px 12px 0" }}>Ranking por Personal</div>
-            <table style={{ width:"100%",borderCollapse:"collapse",marginTop:6 }}><thead><tr style={{ borderBottom:`1px solid ${C.border}` }}>{["Personal","Atend.","Média","Treino"].map((h,i)=>(<th key={i} style={{ padding:"7px 10px",fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,fontWeight:600,textAlign:i===0?"left":"center" }}>{h}</th>))}</tr></thead><tbody>
-              {personals.filter(p=>personalStats[p]?.total>0).sort((a,b)=>personalStats[b].total-personalStats[a].total).map((p,i)=>{const s=personalStats[p];const avg=s.duracoes.length?Math.round(s.duracoes.reduce((a,b)=>a+b,0)/s.duracoes.length):"—";return(<tr key={p} style={{ borderBottom:`1px solid ${C.border}22`,background:i%2===0?"transparent":C.bg+"44" }}><td style={{ padding:"9px 10px",fontSize:13,fontWeight:500 }}>{p}</td><td style={{ padding:"9px 10px",textAlign:"center",fontFamily:"'Inter',sans-serif",fontWeight:600,color:C.accent }}>{s.total}</td><td style={{ padding:"9px 10px",textAlign:"center",fontFamily:"'Inter',sans-serif",color:C.dim }}>{avg}</td><td style={{ padding:"9px 10px",textAlign:"center" }}>{s.emTreino>0?<span style={{ background:C.successDim,color:C.success,padding:"2px 10px",borderRadius:12,fontSize:11,fontWeight:600 }}>{s.emTreino}</span>:"—"}</td></tr>);})}
+            <table style={{ width:"100%",borderCollapse:"collapse",marginTop:6 }}><thead><tr style={{ borderBottom:`1px solid ${C.border}` }}>{["Personal","Atend.",`Média ${areaPrincipal}`,"Treino"].map((h,i)=>(<th key={i} style={{ padding:"7px 10px",fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,fontWeight:600,textAlign:i===0?"left":"center" }}>{h}</th>))}</tr></thead><tbody>
+              {personals.filter(p=>personalStats[p]?.total>0).sort((a,b)=>personalStats[b].total-personalStats[a].total).map((p,i)=>{const s=personalStats[p];const avg=s.duracoesArea.length?Math.round(s.duracoesArea.reduce((a,b)=>a+b,0)/s.duracoesArea.length):"—";return(<tr key={p} style={{ borderBottom:`1px solid ${C.border}22`,background:i%2===0?"transparent":C.bg+"44" }}><td style={{ padding:"9px 10px",fontSize:13,fontWeight:500 }}>{p}</td><td style={{ padding:"9px 10px",textAlign:"center",fontFamily:"'Inter',sans-serif",fontWeight:600,color:C.accent }}>{s.total}</td><td style={{ padding:"9px 10px",textAlign:"center",fontFamily:"'Inter',sans-serif",color:C.dim }}>{avg}</td><td style={{ padding:"9px 10px",textAlign:"center" }}>{s.emTreino>0?<span style={{ background:C.successDim,color:C.success,padding:"2px 10px",borderRadius:12,fontSize:11,fontWeight:600 }}>{s.emTreino}</span>:"—"}</td></tr>);})}
               {personals.every(p=>!personalStats[p]?.total)&&<tr><td colSpan={4} style={{ padding:28,textAlign:"center",color:C.dim }}>Nenhum atendimento</td></tr>}
             </tbody></table>
           </div>
