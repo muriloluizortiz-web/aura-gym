@@ -273,6 +273,27 @@ export default function AuraGym() {
     return m;
   })();
 
+  // Stats por área
+  const areaStats = (() => {
+    const m = {};
+    areas.forEach(a => { m[a]={total:0,emTreino:0,duracoes:[]}; });
+    records.forEach(r => {
+      if(r.area && m[r.area]) {
+        m[r.area].total++;
+        if(!r.saida) m[r.area].emTreino++;
+        if(r.saida){const d=timeDiffMin(r.entrada,r.saida);if(d>0)m[r.area].duracoes.push(d);}
+      }
+    });
+    return m;
+  })();
+
+  // Média específica de Musculação (Máquinas + Peso Livre)
+  const musculacaoDuracoes = finalizados
+    .filter(r => r.area === "Máquinas" || r.area === "Peso Livre")
+    .map(r => timeDiffMin(r.entrada, r.saida))
+    .filter(d => d > 0);
+  const mediaMusculacao = musculacaoDuracoes.length ? Math.round(musculacaoDuracoes.reduce((a,b)=>a+b,0)/musculacaoDuracoes.length) : 0;
+
   const registrarEntrada = async () => {
     if(!form.nome.trim()) return;
     const hora = form.horaEntrada || nowTime();
@@ -400,7 +421,7 @@ export default function AuraGym() {
             <div style={{ flex:"0 0 90px" }}><label style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>Capacidade</label><input type="number" value={capacidade} onChange={e=>handleCapacidade(Number(e.target.value))} style={{...inputStyle,marginTop:3}} /></div>
           </div>
           <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:14 }}>
-            {[{l:"Entradas",v:allNamed.length,c:C.accent},{l:"Em Treino",v:emTreino.length,c:C.success},{l:"Média",v:mediaDuracao?`${mediaDuracao}m`:"—",c:C.text},{l:"Ocupação",v:`${taxaOcupacao}%`,c:taxaOcupacao>80?C.danger:C.accent}].map((k,i)=>(
+            {[{l:"Entradas",v:allNamed.length,c:C.accent},{l:"Em Treino",v:emTreino.length,c:C.success},{l:"Média Musc.",v:mediaMusculacao?`${mediaMusculacao}m`:"—",c:C.text},{l:"Ocupação",v:`${taxaOcupacao}%`,c:taxaOcupacao>80?C.danger:C.accent}].map((k,i)=>(
               <div key={i} style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 6px",textAlign:"center" }}><div style={{ fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>{k.l}</div><div style={{ fontFamily:"'Inter',sans-serif",fontSize:20,fontWeight:700,color:k.c,marginTop:2 }}>{k.v}</div></div>
             ))}
           </div>
@@ -485,7 +506,7 @@ export default function AuraGym() {
         {/* ═══ PAINEL ═══ */}
         {tab===TABS.PAINEL && (<div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18 }}>
-            {[{l:"Total",v:allNamed.length,i:"👥",c:C.accent},{l:"Em Treino",v:emTreino.length,i:"🏃",c:C.success},{l:"Média",v:mediaDuracao?`${mediaDuracao}m`:"—",i:"⏱",c:C.text},{l:"Ocupação",v:`${taxaOcupacao}%`,i:"📈",c:taxaOcupacao>80?C.danger:C.accent}].map((k,i)=>(<div key={i} style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:16,textAlign:"center" }}><div style={{ fontSize:22,marginBottom:2 }}>{k.i}</div><div style={{ fontFamily:"'Inter',sans-serif",fontSize:26,fontWeight:700,color:k.c }}>{k.v}</div><div style={{ fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginTop:3 }}>{k.l}</div></div>))}
+            {[{l:"Total",v:allNamed.length,i:"👥",c:C.accent},{l:"Em Treino",v:emTreino.length,i:"🏃",c:C.success},{l:"Média Musc.",v:mediaMusculacao?`${mediaMusculacao}m`:"—",i:"⏱",c:C.text},{l:"Ocupação",v:`${taxaOcupacao}%`,i:"📈",c:taxaOcupacao>80?C.danger:C.accent}].map((k,i)=>(<div key={i} style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:16,textAlign:"center" }}><div style={{ fontSize:22,marginBottom:2 }}>{k.i}</div><div style={{ fontFamily:"'Inter',sans-serif",fontSize:26,fontWeight:700,color:k.c }}>{k.v}</div><div style={{ fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginTop:3 }}>{k.l}</div></div>))}
           </div>
           <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:14,marginBottom:18 }}><div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginBottom:6 }}>Ocupação</div><div style={{ background:"#E0D5C7",borderRadius:5,height:22,overflow:"hidden",position:"relative" }}><div style={{ height:"100%",borderRadius:5,transition:"width .5s",width:`${Math.min(taxaOcupacao,100)}%`,background:taxaOcupacao>80?`linear-gradient(90deg,${C.warning},${C.danger})`:`linear-gradient(90deg,#6A2135,#8B2D47)` }}/><div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:600,fontSize:11,color:"#fff",color:"#fff" }}>{emTreino.length}/{capacidade}</div></div></div>
           <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden" }}>
@@ -493,6 +514,15 @@ export default function AuraGym() {
             <table style={{ width:"100%",borderCollapse:"collapse",marginTop:6 }}><thead><tr style={{ borderBottom:`1px solid ${C.border}` }}>{["Personal","Atend.","Média","Treino"].map((h,i)=>(<th key={i} style={{ padding:"7px 10px",fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,fontWeight:600,textAlign:i===0?"left":"center" }}>{h}</th>))}</tr></thead><tbody>
               {personals.filter(p=>personalStats[p]?.total>0).sort((a,b)=>personalStats[b].total-personalStats[a].total).map((p,i)=>{const s=personalStats[p];const avg=s.duracoes.length?Math.round(s.duracoes.reduce((a,b)=>a+b,0)/s.duracoes.length):"—";return(<tr key={p} style={{ borderBottom:`1px solid ${C.border}22`,background:i%2===0?"transparent":C.bg+"44" }}><td style={{ padding:"9px 10px",fontSize:13,fontWeight:500 }}>{p}</td><td style={{ padding:"9px 10px",textAlign:"center",fontFamily:"'Inter',sans-serif",fontWeight:600,color:C.accent }}>{s.total}</td><td style={{ padding:"9px 10px",textAlign:"center",fontFamily:"'Inter',sans-serif",color:C.dim }}>{avg}</td><td style={{ padding:"9px 10px",textAlign:"center" }}>{s.emTreino>0?<span style={{ background:C.successDim,color:C.success,padding:"2px 10px",borderRadius:12,fontSize:11,fontWeight:600 }}>{s.emTreino}</span>:"—"}</td></tr>);})}
               {personals.every(p=>!personalStats[p]?.total)&&<tr><td colSpan={4} style={{ padding:28,textAlign:"center",color:C.dim }}>Nenhum atendimento</td></tr>}
+            </tbody></table>
+          </div>
+
+          {/* Média por Área */}
+          <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden",marginTop:16 }}>
+            <div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,padding:"10px 12px 0" }}>Média de Tempo por Área</div>
+            <table style={{ width:"100%",borderCollapse:"collapse",marginTop:6 }}><thead><tr style={{ borderBottom:`1px solid ${C.border}` }}>{["Área","Atend.","Média (min)","Em Treino"].map((h,i)=>(<th key={i} style={{ padding:"7px 10px",fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,fontWeight:600,textAlign:i===0?"left":"center" }}>{h}</th>))}</tr></thead><tbody>
+              {areas.filter(a=>areaStats[a]?.total>0).sort((a,b)=>areaStats[b].total-areaStats[a].total).map((a,i)=>{const s=areaStats[a];const avg=s.duracoes.length?Math.round(s.duracoes.reduce((x,y)=>x+y,0)/s.duracoes.length):"—";return(<tr key={a} style={{ borderBottom:`1px solid ${C.border}22`,background:i%2===0?"transparent":C.bg+"44" }}><td style={{ padding:"9px 10px",fontSize:13,fontWeight:500 }}>{a}</td><td style={{ padding:"9px 10px",textAlign:"center",fontFamily:"'Inter',sans-serif",fontWeight:600,color:C.accent }}>{s.total}</td><td style={{ padding:"9px 10px",textAlign:"center",fontFamily:"'Inter',sans-serif",fontWeight:700,color:C.text }}>{avg}</td><td style={{ padding:"9px 10px",textAlign:"center" }}>{s.emTreino>0?<span style={{ background:C.successDim,color:C.success,padding:"2px 10px",borderRadius:12,fontSize:11,fontWeight:600 }}>{s.emTreino}</span>:"—"}</td></tr>);})}
+              {areas.every(a=>!areaStats[a]?.total)&&<tr><td colSpan={4} style={{ padding:28,textAlign:"center",color:C.dim }}>Nenhum atendimento</td></tr>}
             </tbody></table>
           </div>
         </div>)}
