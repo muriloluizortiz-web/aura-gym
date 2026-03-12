@@ -4,9 +4,9 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 //  CONFIGURAÇÃO — Preencha com seus dados (veja o guia)
 // ═══════════════════════════════════════════════════════════
 const FIREBASE_CONFIG = {
-  apiKey: "COLE_AQUI",
-  authDomain: "COLE_AQUI",
-  projectId: "COLE_AQUI",
+  apiKey: "AIzaSyDEdY5HoIa_jntjBCYVV_X8O7JOgJ_32gs",
+  authDomain: "aura-gym-9f65b.firebaseapp.com",
+  projectId: "aura-gym-9f65b",
 };
 
 const API_URL = "https://script.google.com/macros/s/AKfycbxEUdDekifPCVUnlU-4ouZbp1U0WS02K6uLIUsavQc61Pv_iGpU4ARk7iDAXhcIsp6UKQ/exec";
