@@ -202,10 +202,6 @@ export default function AuraGym() {
     try {
       const saved = JSON.parse(window.sessionStorage?.getItem?.("aura_user") || "null");
       if (saved) setUser(saved);
-      const savedP = JSON.parse(window.localStorage?.getItem?.("aura_personals") || "null");
-      if (savedP) setPersonals(savedP);
-      const savedA = JSON.parse(window.localStorage?.getItem?.("aura_areas") || "null");
-      if (savedA) setAreas(savedA);
     } catch(e) {}
   }, []);
 
@@ -227,10 +223,8 @@ export default function AuraGym() {
   const loadFromCloud = useCallback(async () => {
     const data = await apiGet({ action:"getToday", data: todayKey() });
     if (data && data.records) {
-      // Normaliza: garante que a data bate (o Sheets pode formatar diferente)
       const today = todayKey();
       const recs = data.records.filter(r => {
-        // Aceita se a data contém o padrão YYYY-MM-DD do dia
         const d = String(r.data || "");
         return d === today || d.startsWith(today) || d.includes(today.replace(/-/g,"/"));
       }).map(r => ({
@@ -247,6 +241,10 @@ export default function AuraGym() {
       if (cfg.config.capacidade) setCapacidade(Number(cfg.config.capacidade));
       if (cfg.config.lider_sala) setLiderSala(cfg.config.lider_sala);
     }
+    const pData = await apiGet({ action:"getPersonals" });
+    if (pData?.items && pData.items.length > 0) setPersonals(pData.items);
+    const aData = await apiGet({ action:"getAreas" });
+    if (aData?.items && aData.items.length > 0) setAreas(aData.items);
   }, []);
 
   // Force refresh
@@ -308,28 +306,26 @@ export default function AuraGym() {
   const handleLider = (v) => { setLiderSala(v); saveConfigDebounced("lider_sala",v); };
   const handleCapacidade = (v) => { setCapacidade(v); saveConfigDebounced("capacidade",v); };
 
-  // Personals & Areas management
-  const addPersonal = () => {
+  // Personals & Areas — salva em abas separadas na planilha
+  const addPersonal = async () => {
     if (!newPersonal.trim()) return;
-    const updated = [...personals, newPersonal.trim()];
-    setPersonals(updated); setNewPersonal("");
-    try { window.localStorage?.setItem?.("aura_personals", JSON.stringify(updated)); } catch(e) {}
+    setPersonals(prev => [...prev, newPersonal.trim()]);
+    await apiPost({ action:"addPersonal", nome: newPersonal.trim() });
+    setNewPersonal("");
   };
-  const removePersonal = (name) => {
-    const updated = personals.filter(p => p !== name);
-    setPersonals(updated);
-    try { window.localStorage?.setItem?.("aura_personals", JSON.stringify(updated)); } catch(e) {}
+  const removePersonal = async (name) => {
+    setPersonals(prev => prev.filter(p => p !== name));
+    await apiPost({ action:"removePersonal", nome: name });
   };
-  const addArea = () => {
+  const addArea = async () => {
     if (!newArea.trim()) return;
-    const updated = [...areas, newArea.trim()];
-    setAreas(updated); setNewArea("");
-    try { window.localStorage?.setItem?.("aura_areas", JSON.stringify(updated)); } catch(e) {}
+    setAreas(prev => [...prev, newArea.trim()]);
+    await apiPost({ action:"addArea", nome: newArea.trim() });
+    setNewArea("");
   };
-  const removeArea = (name) => {
-    const updated = areas.filter(a => a !== name);
-    setAreas(updated);
-    try { window.localStorage?.setItem?.("aura_areas", JSON.stringify(updated)); } catch(e) {}
+  const removeArea = async (name) => {
+    setAreas(prev => prev.filter(a => a !== name));
+    await apiPost({ action:"removeArea", nome: name });
   };
 
   const inputStyle = { background:"#F2F0EF",border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit" };
