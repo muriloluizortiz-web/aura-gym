@@ -195,6 +195,7 @@ export default function AuraGym() {
   const [areas, setAreas] = useState(DEFAULT_AREAS);
   const [newPersonal, setNewPersonal] = useState("");
   const [newArea, setNewArea] = useState("");
+  const [areaPrincipal, setAreaPrincipal] = useState("Máquinas");
   const syncTimeout = useRef(null);
   const tick = useTick(1000);
 
@@ -240,6 +241,7 @@ export default function AuraGym() {
     if (cfg?.config) {
       if (cfg.config.capacidade) setCapacidade(Number(cfg.config.capacidade));
       if (cfg.config.lider_sala) setLiderSala(cfg.config.lider_sala);
+      if (cfg.config.area_principal) setAreaPrincipal(cfg.config.area_principal);
     }
     const pData = await apiGet({ action:"getPersonals" });
     if (pData?.items && pData.items.length > 0) setPersonals(pData.items);
@@ -287,12 +289,12 @@ export default function AuraGym() {
     return m;
   })();
 
-  // Média específica de Musculação (Máquinas + Peso Livre)
-  const musculacaoDuracoes = finalizados
-    .filter(r => r.area === "Máquinas" || r.area === "Peso Livre")
+  // Média da área principal selecionada na Config
+  const areaPrincipalDuracoes = finalizados
+    .filter(r => r.area === areaPrincipal)
     .map(r => timeDiffMin(r.entrada, r.saida))
     .filter(d => d > 0);
-  const mediaMusculacao = musculacaoDuracoes.length ? Math.round(musculacaoDuracoes.reduce((a,b)=>a+b,0)/musculacaoDuracoes.length) : 0;
+  const mediaAreaPrincipal = areaPrincipalDuracoes.length ? Math.round(areaPrincipalDuracoes.reduce((a,b)=>a+b,0)/areaPrincipalDuracoes.length) : 0;
 
   const registrarEntrada = async () => {
     if(!form.nome.trim()) return;
@@ -326,6 +328,7 @@ export default function AuraGym() {
 
   const handleLider = (v) => { setLiderSala(v); saveConfigDebounced("lider_sala",v); };
   const handleCapacidade = (v) => { setCapacidade(v); saveConfigDebounced("capacidade",v); };
+  const handleAreaPrincipal = (v) => { setAreaPrincipal(v); saveConfigDebounced("area_principal",v); };
 
   // Personals & Areas — salva em abas separadas na planilha
   const addPersonal = async () => {
@@ -421,7 +424,7 @@ export default function AuraGym() {
             <div style={{ flex:"0 0 90px" }}><label style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>Capacidade</label><input type="number" value={capacidade} onChange={e=>handleCapacidade(Number(e.target.value))} style={{...inputStyle,marginTop:3}} /></div>
           </div>
           <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:14 }}>
-            {[{l:"Entradas",v:allNamed.length,c:C.accent},{l:"Em Treino",v:emTreino.length,c:C.success},{l:"Média Musc.",v:mediaMusculacao?`${mediaMusculacao}m`:"—",c:C.text},{l:"Ocupação",v:`${taxaOcupacao}%`,c:taxaOcupacao>80?C.danger:C.accent}].map((k,i)=>(
+            {[{l:"Entradas",v:allNamed.length,c:C.accent},{l:"Em Treino",v:emTreino.length,c:C.success},{l:`Média ${areaPrincipal}`,v:mediaAreaPrincipal?`${mediaAreaPrincipal}m`:"—",c:C.text},{l:"Ocupação",v:`${taxaOcupacao}%`,c:taxaOcupacao>80?C.danger:C.accent}].map((k,i)=>(
               <div key={i} style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 6px",textAlign:"center" }}><div style={{ fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>{k.l}</div><div style={{ fontFamily:"'Inter',sans-serif",fontSize:20,fontWeight:700,color:k.c,marginTop:2 }}>{k.v}</div></div>
             ))}
           </div>
@@ -506,7 +509,7 @@ export default function AuraGym() {
         {/* ═══ PAINEL ═══ */}
         {tab===TABS.PAINEL && (<div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18 }}>
-            {[{l:"Total",v:allNamed.length,i:"👥",c:C.accent},{l:"Em Treino",v:emTreino.length,i:"🏃",c:C.success},{l:"Média Musc.",v:mediaMusculacao?`${mediaMusculacao}m`:"—",i:"⏱",c:C.text},{l:"Ocupação",v:`${taxaOcupacao}%`,i:"📈",c:taxaOcupacao>80?C.danger:C.accent}].map((k,i)=>(<div key={i} style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:16,textAlign:"center" }}><div style={{ fontSize:22,marginBottom:2 }}>{k.i}</div><div style={{ fontFamily:"'Inter',sans-serif",fontSize:26,fontWeight:700,color:k.c }}>{k.v}</div><div style={{ fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginTop:3 }}>{k.l}</div></div>))}
+            {[{l:"Total",v:allNamed.length,i:"👥",c:C.accent},{l:"Em Treino",v:emTreino.length,i:"🏃",c:C.success},{l:`Média ${areaPrincipal}`,v:mediaAreaPrincipal?`${mediaAreaPrincipal}m`:"—",i:"⏱",c:C.text},{l:"Ocupação",v:`${taxaOcupacao}%`,i:"📈",c:taxaOcupacao>80?C.danger:C.accent}].map((k,i)=>(<div key={i} style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:16,textAlign:"center" }}><div style={{ fontSize:22,marginBottom:2 }}>{k.i}</div><div style={{ fontFamily:"'Inter',sans-serif",fontSize:26,fontWeight:700,color:k.c }}>{k.v}</div><div style={{ fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginTop:3 }}>{k.l}</div></div>))}
           </div>
           <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:14,marginBottom:18 }}><div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginBottom:6 }}>Ocupação</div><div style={{ background:"#E0D5C7",borderRadius:5,height:22,overflow:"hidden",position:"relative" }}><div style={{ height:"100%",borderRadius:5,transition:"width .5s",width:`${Math.min(taxaOcupacao,100)}%`,background:taxaOcupacao>80?`linear-gradient(90deg,${C.warning},${C.danger})`:`linear-gradient(90deg,#6A2135,#8B2D47)` }}/><div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:600,fontSize:11,color:"#fff",color:"#fff" }}>{emTreino.length}/{capacidade}</div></div></div>
           <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden" }}>
@@ -563,6 +566,16 @@ export default function AuraGym() {
               <input value={newArea} onChange={e=>setNewArea(e.target.value)} placeholder="Nome da nova área..." style={{...inputStyle,flex:1}} onKeyDown={e=>e.key==="Enter"&&addArea()} />
               <button onClick={addArea} style={{ padding:"10px 18px",border:"none",borderRadius:8,background:C.accent,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap" }}>+ Adicionar</button>
             </div>
+          </div>
+
+          {/* Área Principal (média do KPI) */}
+          <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:18,marginBottom:16 }}>
+            <div style={{ fontSize:12,color:C.dim,textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:12 }}>Área Principal (Média do Painel)</div>
+            <div style={{ fontSize:13,color:C.dim,marginBottom:10 }}>A média exibida nos KPIs das telas Registro e Painel será calculada com base nesta área.</div>
+            <select value={areaPrincipal} onChange={e=>handleAreaPrincipal(e.target.value)} style={{...inputStyle,cursor:"pointer",appearance:"auto"}}>
+              {areas.map(a=><option key={a} value={a}>{a}</option>)}
+            </select>
+            <div style={{ fontSize:11,color:C.dim,marginTop:8 }}>Selecionada: <strong style={{color:C.accent}}>{areaPrincipal}</strong></div>
           </div>
 
           {/* Info */}
