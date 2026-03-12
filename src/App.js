@@ -252,11 +252,12 @@ export default function AuraGym() {
   // Force refresh
   const forceRefresh = () => { loadFromCloud(); };
 
-  if (!skipAuth && !user) return <LoginScreen onLogin={handleLogin} />;
+  // ── Show login or app based on auth state ──
+  const showLogin = !skipAuth && !user;
 
-  const emTreino = records.filter(r => r.nome && !r.saida);
-  const finalizados = records.filter(r => r.nome && r.saida);
-  const allNamed = records.filter(r => r.nome);
+  const emTreino = showLogin ? [] : records.filter(r => r.nome && !r.saida);
+  const finalizados = showLogin ? [] : records.filter(r => r.nome && r.saida);
+  const allNamed = showLogin ? [] : records.filter(r => r.nome);
   const duracoes = finalizados.map(r => timeDiffMin(r.entrada,r.saida)).filter(d=>d>0);
   const mediaDuracao = duracoes.length ? Math.round(duracoes.reduce((a,b)=>a+b,0)/duracoes.length) : 0;
   const taxaOcupacao = capacidade>0 ? Math.round((emTreino.length/capacidade)*100) : 0;
@@ -346,6 +347,8 @@ export default function AuraGym() {
   const cellS = { padding:"0 5px",height:34,display:"flex",alignItems:"center",fontSize:12,borderRight:`1px solid ${C.border}`,borderBottom:`1px solid ${C.border}`,boxSizing:"border-box",overflow:"hidden",whiteSpace:"nowrap" };
 
   const isApiConfigured = API_URL && API_URL !== "COLE_SUA_URL_AQUI";
+
+  if (showLogin) return <LoginScreen onLogin={handleLogin} />;
 
   return (
     <div style={{ minHeight:"100vh",background:C.bg,color:C.text,fontFamily:"'DM Sans','Segoe UI',sans-serif" }}>
