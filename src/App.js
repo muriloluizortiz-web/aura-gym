@@ -149,7 +149,7 @@ function LoginScreen({ onLogin }) {
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <div style={{ width:"100%", maxWidth:380 }}>
         <div style={{ textAlign:"center", marginBottom:36 }}>
-          <img src="/icon.png" alt="Aura Gym" style={{ width:64, height:64, objectFit:"contain", marginBottom:12 }} />
+          <img src="/icon.png" alt="Aura Gym" style={{ width:64, height:64, objectFit:"contain", marginBottom:12, mixBlendMode:"multiply" }} />
           <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:22, color:C.accent, letterSpacing:3 }}>AURA GYM</div>
           <div style={{ fontSize:12, color:C.dim, marginTop:4, letterSpacing:1 }}>TORRE DE CONTROLE</div>
         </div>
@@ -365,8 +365,8 @@ export default function AuraGym() {
         <div style={{ maxWidth:1080,margin:"0 auto" }}>
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8 }}>
             <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-              <img src="/icon.png" alt="Aura" style={{ width:32, height:32, objectFit:"contain" }} />
-              <img src="/logo.png" alt="Aura Gym" style={{ height:20, objectFit:"contain" }} />
+              <img src="/icon.png" alt="Aura" style={{ width:32, height:32, objectFit:"contain", mixBlendMode:"multiply" }} />
+              <img src="/logo.png" alt="Aura Gym" style={{ height:20, objectFit:"contain", mixBlendMode:"multiply" }} />
             </div>
             <div style={{ display:"flex",alignItems:"center",gap:8 }}>
               {/* Sync + Refresh */}
