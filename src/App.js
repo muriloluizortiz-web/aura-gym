@@ -257,11 +257,9 @@ export default function AuraGym() {
     const data = await apiGet({ action:"getToday", data: todayKey() });
     if (data && data.records) {
       const today = todayKey();
-      const [yr, mo, dy] = today.split("-");
-      const altDate = `${dy}/${mo}/${yr}`;
       const recs = data.records.filter(r => {
         const d = String(r.data || "");
-        return d === today || d.startsWith(today) || d.includes(today.replace(/-/g,"/")) || d === altDate || d.startsWith(altDate);
+        return d === today || d.startsWith(today) || d.includes(today.replace(/-/g,"/"));
       }).map(r => ({
         ...r,
         id: r.id || Date.now(),
@@ -287,13 +285,11 @@ export default function AuraGym() {
   useEffect(() => {
     if (tab !== TABS.HISTORICO || !histDate) return;
     setHistLoading(true);
-    const [hyr, hmo, hdy] = histDate.split("-");
-    const hAlt = `${hdy}/${hmo}/${hyr}`;
     apiGet({ action:"getToday", data: histDate }).then(data => {
       if (data?.records) {
         setHistRecords(data.records.filter(r => {
           const d = String(r.data || "");
-          return d === histDate || d.startsWith(histDate) || d.includes(histDate.replace(/-/g,"/")) || d === hAlt || d.startsWith(hAlt);
+          return d === histDate || d.startsWith(histDate) || d.includes(histDate.replace(/-/g,"/"));
         }).map(r => ({
           ...r,
           entrada: parseTime(r.entrada) || r.entrada,
