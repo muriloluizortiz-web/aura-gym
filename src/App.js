@@ -103,7 +103,7 @@ const C = {
   rowOdd:"#F2F0EF", rowEven:"#FFFFFF", headerBg:"#E0D5C7",
 };
 
-const TABS = { REGISTRO:0, RESUMO:1, AOVIVO:2, PAINEL:3, CONFIG:4 };
+const TABS = { REGISTRO:0, RESUMO:1, AOVIVO:2, PAINEL:3, CONFIG:4, HISTORICO:5 };
 
 // ═══ LOGIN ═══
 const toFakeEmail = (username) => `${username.toLowerCase().trim().replace(/\s+/g,".")}@auragym.local`;
@@ -198,6 +198,9 @@ export default function AuraGym() {
   const [areaPrincipal, setAreaPrincipal] = useState("Musculação");
   const syncTimeout = useRef(null);
   const tick = useTick(1000);
+  const [histDate, setHistDate] = useState(todayKey());
+  const [histRecords, setHistRecords] = useState([]);
+  const [histLoading, setHistLoading] = useState(false);
 
   useEffect(() => {
     try {
@@ -225,9 +228,11 @@ export default function AuraGym() {
     const data = await apiGet({ action:"getToday", data: todayKey() });
     if (data && data.records) {
       const today = todayKey();
+      const [yr, mo, dy] = today.split("-");
+      const altDate = `${dy}/${mo}/${yr}`;
       const recs = data.records.filter(r => {
         const d = String(r.data || "");
-        return d === today || d.startsWith(today) || d.includes(today.replace(/-/g,"/"));
+        return d === today || d.startsWith(today) || d.includes(today.replace(/-/g,"/")) || d === altDate || d.startsWith(altDate);
       }).map(r => ({
         ...r,
         id: r.id || Date.now(),
@@ -248,6 +253,24 @@ export default function AuraGym() {
     const aData = await apiGet({ action:"getAreas" });
     if (aData?.items && aData.items.length > 0) setAreas(aData.items);
   }, []);
+
+  useEffect(() => {
+    if (tab !== TABS.HISTORICO || !histDate) return;
+    setHistLoading(true);
+    const [hyr, hmo, hdy] = histDate.split("-");
+    const hAlt = `${hdy}/${hmo}/${hyr}`;
+    apiGet({ action:"getToday", data: histDate }).then(data => {
+      if (data?.records) {
+        setHistRecords(data.records.filter(r => {
+          const d = String(r.data || "");
+          return d === histDate || d.startsWith(histDate) || d.includes(histDate.replace(/-/g,"/")) || d === hAlt || d.startsWith(hAlt);
+        }));
+      } else {
+        setHistRecords([]);
+      }
+      setHistLoading(false);
+    });
+  }, [tab, histDate]);
 
   // Force refresh
   const forceRefresh = () => { loadFromCloud(); };
@@ -365,6 +388,7 @@ export default function AuraGym() {
     { key:TABS.AOVIVO, label:"🔴 Ao Vivo" },
     { key:TABS.PAINEL, label:"📈 Painel" },
     { key:TABS.CONFIG, label:"⚙️ Config" },
+    { key:TABS.HISTORICO, label:"📅 Histórico" },
   ];
 
   const cols = [{k:"#",w:34},{k:"nome",w:158,l:"Nome"},{k:"entrada",w:56,l:"Entrada"},{k:"saida",w:56,l:"Saída"},{k:"dur",w:44,l:"Min"},{k:"personal",w:136,l:"Personal"},{k:"area",w:82,l:"Área"},{k:"status",w:64,l:"Status"},{k:"aval",w:80,l:"Nota"}];
@@ -372,6 +396,41 @@ export default function AuraGym() {
   const cellS = { padding:"0 5px",height:34,display:"flex",alignItems:"center",fontSize:12,borderRight:`1px solid ${C.border}`,borderBottom:`1px solid ${C.border}`,boxSizing:"border-box",overflow:"hidden",whiteSpace:"nowrap" };
 
   const isApiConfigured = API_URL && API_URL !== "COLE_SUA_URL_AQUI";
+
+  // Histórico — derived values (computed before early return so they're not conditional)
+  const histNamed = histRecords.filter(r => r.nome);
+  const histFin = histNamed.filter(r => r.saida);
+  const histDurs = histFin.map(r => timeDiffMin(r.entrada, r.saida)).filter(d => d > 0);
+  const histMediaDur = histDurs.length ? Math.round(histDurs.reduce((a,b)=>a+b,0)/histDurs.length) : 0;
+  const histPico = histNamed.reduce((mx, r) => Math.max(mx, Number(r.ocupacao_entrada||0)), 0);
+  const histPersonalMap = (() => {
+    const m = {};
+    histNamed.forEach(r => {
+      if (!r.personal) return;
+      if (!m[r.personal]) m[r.personal] = { total:0, durs:[] };
+      m[r.personal].total++;
+      const d = timeDiffMin(r.entrada, r.saida);
+      if (d > 0) m[r.personal].durs.push(d);
+    });
+    return m;
+  })();
+  const histOccSlots = (() => {
+    const slots = Array(96).fill(0);
+    histNamed.forEach(r => {
+      if (!r.entrada) return;
+      const parts = r.entrada.split(":");
+      if (parts.length < 2) return;
+      const eh = Number(parts[0]), em = Number(parts[1]);
+      const s0 = eh * 4 + Math.floor(em / 15);
+      let s1 = s0;
+      if (r.saida) {
+        const sp = r.saida.split(":");
+        if (sp.length >= 2) { const sh = Number(sp[0]), sm = Number(sp[1]); s1 = sh * 4 + Math.floor(sm / 15); }
+      }
+      for (let s = s0; s <= Math.min(s1, 95); s++) slots[s]++;
+    });
+    return slots;
+  })();
 
   if (showLogin) return <LoginScreen onLogin={handleLogin} />;
 
@@ -593,6 +652,125 @@ export default function AuraGym() {
               <div>📊 Registros hoje: {allNamed.length}</div>
             </div>
           </div>
+        </div>)}
+
+        {/* ═══ HISTÓRICO ═══ */}
+        {tab===TABS.HISTORICO && (<div>
+          <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:16,flexWrap:"wrap" }}>
+            <div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>Selecionar Dia</div>
+            <input type="date" value={histDate} onChange={e=>setHistDate(e.target.value)} max={todayKey()} style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:14,outline:"none",fontFamily:"inherit" }} />
+            {histLoading && <span style={{ fontSize:12,color:C.dim,animation:"pulse 1.5s infinite" }}>Carregando...</span>}
+          </div>
+
+          {!histLoading && histNamed.length === 0 && (
+            <div style={{ textAlign:"center",padding:50,color:C.dim }}><div style={{ fontSize:36,marginBottom:8 }}>📅</div><div style={{ fontSize:14 }}>Nenhum registro para esta data</div></div>
+          )}
+
+          {!histLoading && histNamed.length > 0 && (<>
+            {/* KPIs */}
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16 }}>
+              {[
+                {l:"Total Entradas",v:histNamed.length,c:C.accent},
+                {l:"Média Duração",v:histMediaDur?`${histMediaDur}m`:"—",c:C.text},
+                {l:"Pico de Ocupação",v:histPico||"—",c:C.accent}
+              ].map((k,i)=>(
+                <div key={i} style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 8px",textAlign:"center" }}>
+                  <div style={{ fontSize:9,color:C.dim,textTransform:"uppercase",letterSpacing:1 }}>{k.l}</div>
+                  <div style={{ fontFamily:"'Inter',sans-serif",fontSize:22,fontWeight:700,color:k.c,marginTop:2 }}>{k.v}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Gráfico de Ocupação */}
+            {(() => {
+              const maxV = Math.max(...histOccSlots, 1);
+              let fi = histOccSlots.findIndex(v => v > 0);
+              let li = 95 - [...histOccSlots].reverse().findIndex(v => v > 0);
+              if (fi < 0) return null;
+              fi = Math.max(0, Math.floor(fi/4)*4 - 4);
+              li = Math.min(95, Math.ceil(li/4)*4 + 4);
+              const vis = histOccSlots.slice(fi, li+1);
+              const svgH = 80;
+              const barW = 320 / vis.length;
+              return (
+                <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"12px 14px",marginBottom:16 }}>
+                  <div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,marginBottom:8 }}>Ocupação ao Longo do Dia (intervalos de 15 min)</div>
+                  <svg width="100%" viewBox={`0 0 320 ${svgH+18}`} style={{display:"block",overflow:"visible"}}>
+                    <line x1={0} y1={svgH} x2={320} y2={svgH} stroke={C.border} strokeWidth={1}/>
+                    {vis.map((v,i) => {
+                      const h = v > 0 ? Math.max(2,(v/maxV)*svgH) : 0;
+                      const slotIdx = fi+i;
+                      const hr = Math.floor(slotIdx/4);
+                      const mn = (slotIdx%4)*15;
+                      return (
+                        <g key={i}>
+                          <rect x={i*barW+0.5} y={svgH-h} width={Math.max(barW-1,1)} height={h} fill={C.accent} rx={1} opacity={0.8}/>
+                          {i%4===0 && <text x={i*barW+barW*2} y={svgH+13} fontSize={6} fill={C.dim} textAnchor="middle">{`${pad(hr)}h`}</text>}
+                          {v>0 && h>14 && <text x={i*barW+barW/2} y={svgH-h+10} fontSize={7} fill="#fff" textAnchor="middle">{v}</text>}
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
+              );
+            })()}
+
+            {/* Resumo por Personal */}
+            {Object.keys(histPersonalMap).length > 0 && (
+              <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden",marginBottom:16 }}>
+                <div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,padding:"10px 12px 4px" }}>Resumo por Personal</div>
+                <table style={{ width:"100%",borderCollapse:"collapse" }}>
+                  <thead><tr style={{ borderBottom:`1px solid ${C.border}`,background:C.headerBg }}>
+                    {["Personal","Atendimentos","Média Duração"].map((h,i)=>(
+                      <th key={i} style={{ padding:"6px 10px",fontSize:10,color:C.accent,textTransform:"uppercase",letterSpacing:1,fontWeight:700,textAlign:i===0?"left":"center" }}>{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>
+                    {Object.entries(histPersonalMap).sort((a,b)=>b[1].total-a[1].total).map(([p,s],i)=>{
+                      const avg = s.durs.length ? Math.round(s.durs.reduce((a,b)=>a+b,0)/s.durs.length) : null;
+                      return (
+                        <tr key={p} style={{ borderBottom:`1px solid ${C.border}22`,background:i%2===0?"transparent":C.bg }}>
+                          <td style={{ padding:"8px 10px",fontSize:13,fontWeight:500 }}>{p}</td>
+                          <td style={{ padding:"8px 10px",textAlign:"center",fontFamily:"'Inter',sans-serif",fontWeight:600,color:C.accent }}>{s.total}</td>
+                          <td style={{ padding:"8px 10px",textAlign:"center",fontFamily:"'Inter',sans-serif",color:C.dim }}>{avg ? `${avg}m` : "—"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Tabela completa de registros */}
+            <div style={{ background:C.card,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden" }}>
+              <div style={{ fontSize:10,color:C.dim,textTransform:"uppercase",letterSpacing:1,padding:"10px 12px 4px" }}>Registros do Dia ({histNamed.length})</div>
+              <div style={{ overflowX:"auto" }}>
+                <table style={{ width:"100%",borderCollapse:"collapse",minWidth:520 }}>
+                  <thead><tr style={{ borderBottom:`2px solid ${C.accent}44`,background:C.headerBg }}>
+                    {["#","Nome","Entrada","Saída","Min","Personal","Área"].map((h,i)=>(
+                      <th key={i} style={{ padding:"7px 8px",fontSize:10,color:C.accent,textTransform:"uppercase",letterSpacing:1,fontWeight:700,textAlign:i<=1?"left":"center" }}>{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>
+                    {histNamed.map((r,idx)=>{
+                      const dur = timeDiffMin(r.entrada, r.saida);
+                      return (
+                        <tr key={r.id||idx} style={{ borderBottom:`1px solid ${C.border}22`,background:idx%2===0?C.rowOdd:C.rowEven }}>
+                          <td style={{ padding:"7px 8px",fontSize:11,color:C.dim,textAlign:"center" }}>{idx+1}</td>
+                          <td style={{ padding:"7px 8px",fontSize:13,fontWeight:500 }}>{r.nome}</td>
+                          <td style={{ padding:"7px 8px",textAlign:"center",fontSize:12,fontFamily:"'Inter',sans-serif" }}>{r.entrada||"—"}</td>
+                          <td style={{ padding:"7px 8px",textAlign:"center",fontSize:12,fontFamily:"'Inter',sans-serif",color:r.saida?C.text:C.dim }}>{r.saida||"—"}</td>
+                          <td style={{ padding:"7px 8px",textAlign:"center",fontSize:12,fontFamily:"'Inter',sans-serif",color:dur>0?C.accent:C.dim }}>{dur>0?dur:"—"}</td>
+                          <td style={{ padding:"7px 8px",fontSize:12 }}>{r.personal||"—"}</td>
+                          <td style={{ padding:"7px 8px",fontSize:12 }}>{r.area||"—"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>)}
         </div>)}
 
       </div>
