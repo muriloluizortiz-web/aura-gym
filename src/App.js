@@ -24,16 +24,36 @@ const nowTime = () => { const d = new Date(); return `${pad(d.getHours())}:${pad
 const todayStr = () => { const d = new Date(); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`; };
 const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
 
+// Converte qualquer valor de hora vindo do Sheets → "HH:MM"
+// Sheets pode retornar: "08:25", "08:25:00", 0.3506944 (fração do dia), ou Date object
+function parseTime(val) {
+  if (!val && val !== 0) return null;
+  const s = String(val).trim();
+  if (!s || s === "0") return null;
+  // Já no formato HH:MM ou HH:MM:SS
+  if (/^\d{1,2}:\d{2}/.test(s)) return s.substring(0, 5);
+  // Número decimal = fração do dia (ex: 0.3506944 = 08:25)
+  const n = Number(s);
+  if (!isNaN(n) && n > 0 && n < 1) {
+    const mins = Math.round(n * 1440);
+    return pad(Math.floor(mins / 60)) + ":" + pad(mins % 60);
+  }
+  return null;
+}
+
 function timeDiffMin(a, b) {
-  if (!a || !b) return null;
-  const [h1,m1] = a.split(":").map(Number);
-  const [h2,m2] = b.split(":").map(Number);
-  return (h2*60+m2)-(h1*60+m1);
+  const ta = parseTime(a), tb = parseTime(b);
+  if (!ta || !tb) return null;
+  const [h1,m1] = ta.split(":").map(Number);
+  const [h2,m2] = tb.split(":").map(Number);
+  const d = (h2*60+m2)-(h1*60+m1);
+  return isNaN(d) ? null : d;
 }
 
 function elapsedSince(entrada) {
-  if (!entrada) return { min:0,sec:0,total:0 };
-  const [h,m] = entrada.split(":").map(Number);
+  const t = parseTime(entrada);
+  if (!t) return { min:0,sec:0,total:0 };
+  const [h,m] = t.split(":").map(Number);
   const now = new Date();
   const diff = (now.getHours()*3600+now.getMinutes()*60+now.getSeconds())-(h*3600+m*60);
   return { min:Math.floor(Math.max(0,diff)/60), sec:Math.max(0,diff)%60, total:Math.max(0,diff) };
@@ -237,7 +257,8 @@ export default function AuraGym() {
         ...r,
         id: r.id || Date.now(),
         avaliacao: r.avaliacao ? Number(r.avaliacao) : null,
-        saida: r.saida || null,
+        entrada: parseTime(r.entrada) || r.entrada,
+        saida: r.saida ? (parseTime(r.saida) || null) : null,
       }));
       setRecords(recs);
       setConnected(true);
@@ -264,7 +285,11 @@ export default function AuraGym() {
         setHistRecords(data.records.filter(r => {
           const d = String(r.data || "");
           return d === histDate || d.startsWith(histDate) || d.includes(histDate.replace(/-/g,"/")) || d === hAlt || d.startsWith(hAlt);
-        }));
+        }).map(r => ({
+          ...r,
+          entrada: parseTime(r.entrada) || r.entrada,
+          saida: r.saida ? (parseTime(r.saida) || null) : null,
+        })));
       } else {
         setHistRecords([]);
       }
