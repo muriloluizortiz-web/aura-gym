@@ -25,9 +25,15 @@ const todayStr = () => { const d = new Date(); return `${pad(d.getDate())}/${pad
 const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
 
 // Converte qualquer valor de hora vindo do Sheets → "HH:MM"
-// Sheets pode retornar: "08:25", "08:25:00", 0.3506944 (fração do dia), ou Date object
+// Trata: "08:25", "08:25:00", 0.3506944 (fração do dia),
+//        Date object, "Sat Dec 30 1899 08:53:00 GMT-0300..."
 function parseTime(val) {
   if (!val && val !== 0) return null;
+  // Date object direto
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return null;
+    return pad(val.getHours()) + ":" + pad(val.getMinutes());
+  }
   const s = String(val).trim();
   if (!s || s === "0") return null;
   // Já no formato HH:MM ou HH:MM:SS
@@ -38,6 +44,9 @@ function parseTime(val) {
     const mins = Math.round(n * 1440);
     return pad(Math.floor(mins / 60)) + ":" + pad(mins % 60);
   }
+  // String de data contendo horário, ex: "Sat Dec 30 1899 08:53:00 GMT-0300..."
+  const m = s.match(/(\d{2}):(\d{2}):\d{2}/);
+  if (m) return m[1] + ":" + m[2];
   return null;
 }
 
